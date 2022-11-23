@@ -1,20 +1,22 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 type Customer struct {
-	id          int
-	name        string
-	role        string
-	email       string
-	phoneNumber string
-	contacted   bool
+	Id          int
+	Name        string
+	Role        string
+	Email       string
+	PhoneNumber string
+	Contacted   bool
 }
 
 var customer01 Customer = Customer{1, "Steve Kin", "IT Admin", "skin@admin.org", "677-787-1009", true}
@@ -31,70 +33,72 @@ var CUSTOMER_DB = map[int]Customer{
 	5: customer05,
 }
 
-// UI Functions
-
-func printCustomerInfo() {
-	for _, customer := range CUSTOMER_DB {
-		fmt.Println("----------------------------")
-		fmt.Printf("Customer id: %d\n", customer.id)
-		fmt.Printf("Customer name: %s\n", customer.name)
-		fmt.Printf("Customer role: %s\n", customer.role)
-		fmt.Printf("Customer email: %s\n", customer.email)
-		fmt.Printf("Customer phoneNumber: %s\n", customer.phoneNumber)
-		fmt.Printf("Customer contacted: %t\n", customer.contacted)
-		fmt.Println("----------------------------")
-	}
-}
-
-func startAppUI() {
-	fmt.Printf("----------------------------\n")
-	fmt.Println("CRM Backend Start")
-	fmt.Printf("----------------------------\n\n\n")
-}
-
 // CRUD Functions
 
-// func getAllCustomers(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	customerDB_json, err := json.Marshal(CUSTOMER_DB)
-// 	if err != nil {
-// 		return
-// 	}
-// 	fmt.Println(CUSTOMER_DB)
-
-// }
-
-func seedCheck(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-
+func getAllCustJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	for _, customer := range CUSTOMER_DB {
-		fmt.Fprintf(
-			w,
-			"<p>ID: %d\t| NAME: %s\t\t\t| ROLE: %s\t\t\t| EMAIL: %s\t\t\t| PNUMBER: %s\t\t\t| CONTACTED: %t</p>",
-			customer.id, customer.name, customer.role, customer.email, customer.phoneNumber, customer.contacted)
+		json.NewEncoder(w).Encode(customer)
 	}
+}
 
+func getCustJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+	idNumber, err := strconv.Atoi(id)
+	if err != nil {
+		fmt.Print("Error")
+	}
+	json.NewEncoder(w).Encode(CUSTOMER_DB[idNumber])
+}
+
+func deleteCustomer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		return
+	}
+	if _, ok := CUSTOMER_DB[id]; ok {
+		delete(CUSTOMER_DB, id)
+		getAllCustJSON(w, r)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "User Not Found")
+	}
+}
+
+func addCustomer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// How to Add a Customer
+}
+
+func updateCustomer(w http.ResponseWriter, r *http.Request) {
+	// How to Update a Customer
+}
+
+func index(w http.ResponseWriter, r *http.Request) {
+	// Overview and Instructions on how to use the API
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(w, "<h1>CRM BACKEND API | WORK IN PROGRESS</h1>")
 	w.WriteHeader(http.StatusOK)
-	// iterate over cityPoulations and print them within an h2
 }
 
 func main() {
 
-	// start application banner
-	startAppUI()
-
-	//  helper function to enumerate over mock initial
-	// customerDB
-	printCustomerInfo()
-
 	// 21:31 nov 22, starting to set up routes for API
 	router := mux.NewRouter().StrictSlash(true)
 
-	// Handlers
-	router.HandleFunc("/", seedCheck).Methods("GET")
-	// router.HandleFunc("/customers", getAllCustomers).Methods("GET") I have an issue encoding the map as json right now.
+	// Handlers || CRUD
+	router.HandleFunc("/", index).Methods("GET") // Basic Implemented. Copy for instructions left []
 
-	fmt.Println("Server is starting on port 3000...")
+	router.HandleFunc("/customers", addCustomer).Methods("POST")     // Not implemented // CREATE
+	router.HandleFunc("/customers", getAllCustJSON).Methods("GET")   // READ Implemented. Uses a for loop to render the json
+	router.HandleFunc("/customers", updateCustomer).Methods("PATCH") // Not Implemented // UPDATE
+
+	router.HandleFunc("/customers/{id}", getCustJSON).Methods("GET")          // READ 1 Implemented
+	router.HandleFunc("/deleteCustomer/{id}", deleteCustomer).Methods("POST") // DELETE Implemented
+
+	fmt.Println("Server is starting on port 3300...")
 	log.Fatal(http.ListenAndServe(":3300", router))
 
 }
