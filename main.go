@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,12 +26,12 @@ var customer03 Customer = Customer{3, "Kacie Oppa", "IT Admin", "kopp@admin.org"
 var customer04 Customer = Customer{4, "Steve Rich Vin Winkle", "Director of Rich", "vanwin@admin.org", "677-787-1009", true}
 var customer05 Customer = Customer{5, "Merp P", "Big Bobba Boss", "merp@admin.org", "677-787-2349", true}
 
-var CUSTOMER_DB = map[int]Customer{
-	1: customer01,
-	2: customer02,
-	3: customer03,
-	4: customer04,
-	5: customer05,
+var CUSTOMER_DB = map[string]Customer{
+	"1": customer01,
+	"2": customer02,
+	"3": customer03,
+	"4": customer04,
+	"5": customer05,
 }
 
 // CRUD Functions
@@ -45,19 +46,14 @@ func getAllCustJSON(w http.ResponseWriter, r *http.Request) {
 func getCustJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id := mux.Vars(r)["id"]
-	idNumber, err := strconv.Atoi(id)
-	if err != nil {
-		fmt.Print("Error")
-	}
-	json.NewEncoder(w).Encode(CUSTOMER_DB[idNumber])
+	fmt.Println(id)
+	fmt.Println(CUSTOMER_DB[id])
+	json.NewEncoder(w).Encode(CUSTOMER_DB[id])
 }
 
 func deleteCustomer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
 	if _, ok := CUSTOMER_DB[id]; ok {
 		delete(CUSTOMER_DB, id)
 		getAllCustJSON(w, r)
@@ -67,13 +63,75 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addCustomer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	// How to Add a Customer
+func buildCustomerAddBeta(cust *Customer, json *map[string]string) {
+
+	var test map[string]string = *json
+	cust.Id = len(CUSTOMER_DB) + 10
+	cust.Name, _ = test["Name"]
+	cust.Email, _ = test["Email"]
+	cust.Role, _ = test["Role"]
+	cust.PhoneNumber, _ = test["PhoneNumber"]
+	cust.Contacted, _ = strconv.ParseBool(test["Contacted"])
+
 }
 
-func updateCustomer(w http.ResponseWriter, r *http.Request) {
+func addCustomerBeta(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// How to Add a Customer
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	var test map[string]string
+	json.Unmarshal(reqBody, &test)
+	var tempCon Customer
+	buildCustomerAddBeta(&tempCon, &test)
+	strIndex := strconv.Itoa(len(CUSTOMER_DB) + 10)
+	CUSTOMER_DB[strIndex] = tempCon
+
+	if _, ok := CUSTOMER_DB[strIndex]; ok {
+		w.WriteHeader(http.StatusConflict)
+		fmt.Fprintf(w, "User Already exists")
+	} else {
+		CUSTOMER_DB[strIndex] = tempCon
+		getAllCustJSON(w, r)
+	}
+}
+
+func buildCustomerUpdateBeta(cust *Customer, json *map[string]string) {
+
+	var test map[string]string = *json
+	cust.Name, _ = test["Name"]
+	cust.Email, _ = test["Email"]
+	cust.Role, _ = test["Role"]
+	cust.PhoneNumber, _ = test["PhoneNumber"]
+	cust.Contacted, _ = strconv.ParseBool(test["Contacted"])
+
+}
+
+func updateCustomerBeta(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	// How to Update a Customer
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	var test map[string]string
+	json.Unmarshal(reqBody, &test)
+	strIndex, _ := test["Id"]
+	tempCon := CUSTOMER_DB[strIndex]
+	buildCustomerUpdateBeta(&tempCon, &test)
+
+	if _, ok := CUSTOMER_DB[strIndex]; ok {
+		CUSTOMER_DB[strIndex] = tempCon
+		getAllCustJSON(w, r)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "User Not Found")
+	}
+
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
@@ -91,10 +149,11 @@ func main() {
 	// Handlers || CRUD
 	router.HandleFunc("/", index).Methods("GET") // Basic Implemented. Copy for instructions left []
 
-	router.HandleFunc("/customers", addCustomer).Methods("POST")     // Not implemented // CREATE
-	router.HandleFunc("/customers", getAllCustJSON).Methods("GET")   // READ Implemented. Uses a for loop to render the json
-	router.HandleFunc("/customers", updateCustomer).Methods("PATCH") // Not Implemented // UPDATE
+	router.HandleFunc("/customers", addCustomerBeta).Methods("POST")     // Not implemented // CREATE
+	router.HandleFunc("/customers", getAllCustJSON).Methods("GET")       // READ Implemented. Uses a for loop to render the json
+	router.HandleFunc("/customers", updateCustomerBeta).Methods("PATCH") // Not Implemented // UPDATE
 
+	router.HandleFunc("/customers/{id}", updateCustomerBeta).Methods("PATCH")
 	router.HandleFunc("/customers/{id}", getCustJSON).Methods("GET")          // READ 1 Implemented
 	router.HandleFunc("/deleteCustomer/{id}", deleteCustomer).Methods("POST") // DELETE Implemented
 
