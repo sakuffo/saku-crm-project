@@ -48,7 +48,12 @@ func getCustomers(w http.ResponseWriter, r *http.Request) {
 func getCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id := mux.Vars(r)["id"]
-	json.NewEncoder(w).Encode(CUSTOMER_DB[id])
+	if _, ok := CUSTOMER_DB[id]; ok {
+		json.NewEncoder(w).Encode(CUSTOMER_DB[id])
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "User Not Found")
+	}
 }
 
 func deleteCustomer(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +99,8 @@ func addCustomer(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "User Already exists")
 	} else {
 		CUSTOMER_DB[strIndex] = tempCon
-		getCustomers(w, r)
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, "New user created")
 	}
 }
 
