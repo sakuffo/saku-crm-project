@@ -133,20 +133,9 @@ func updateCustomer(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	// Overview and Instructions on how to use the API
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, "<h1>CRM BACKEND API | WORK IN PROGRESS</h1>")
-	w.WriteHeader(http.StatusOK)
-}
-
 func main() {
 
-	// 21:31 nov 22, starting to set up routes for API
 	router := mux.NewRouter().StrictSlash(true)
-
-	// Handlers || CRUD
-	router.HandleFunc("/", index).Methods("GET")
 
 	router.HandleFunc("/customers", addCustomer).Methods("POST")
 	router.HandleFunc("/customers", getCustomers).Methods("GET")
@@ -154,6 +143,8 @@ func main() {
 
 	router.HandleFunc("/customers/{id}", getCustomer).Methods("GET")
 	router.HandleFunc("/customers/{id}", deleteCustomer).Methods("DELETE")
+
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
 	fmt.Println("Server is starting on port 3300...")
 	log.Fatal(http.ListenAndServe(":3300", router))

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1>CRM Backend API</h1>
+  
+  <p>
+    This API should be a straightforward stub to work with customers in a mock CRM database.
+    The Database is a map[string]Customer, where Customer is a struct constructed to manage customers.
+    NB: App is on port 3300 as port 3000 is airplay port on macOS
+  </p>
+  <p>
+    <h2>API Paths</h2>
+    <ul>
+      <h4>Get a Single Customer</h4>
+      <p>HTTP VERB: GET</p>
+      <p>"http://{host-address:port}/customer/{id}" to pull a customer.</p>
+      <p> e.g. (when runing locally) "http://localhost:3300/customer/5"</p>
+    </ul>
+    <ul>
+      <h4>Get a All Customer</h4>
+      <p>HTTP VERB: GET</p>
+      <p>"http://{host-address:port}/customers/" to pull all customer.</p>
+      <p> e.g. (when runing locally) "http://localhost:3300/customers/"</p>
+    </ul>
+    <ul>
+      <h4>Creating a customer</h4>
+      <p>HTTP VERB: POST</p>
+      <p>"http://{host-address:port}/customers/" w/ JSON to create customer.</p>
+      <p> Submit a json payload. ID not required e.g.</p>
+      <p>{
+        "Name": "Jeff Rider",
+        "Role": "Help Desk",
+        "Email": "JeffR@admin.org",
+        "PhoneNumber": "676-767-6677",
+        "Contacted": false
+    }</p>
+    </ul>
+    <ul>
+      <h4>Updating a customer</h4>
+      <p>HTTP VERB: PATCH</p>
+      <p>"http://{host-address:port}/customers/" w/ JSON to update customer.</p>
+      <p> Submit a json payload. ID required to select record. e.g.</p>
+      <p>{
+        "Id": 1,
+        "Name": "Stephen Kin",
+        "Role": "IT Director",
+        "Email": "skin@admin.org",
+        "PhoneNumber": "677-787-1009",
+        "Contacted": true
+    }</p>
+    </ul>
+    <ul>
+      <h4>Delete a Customer</h4>
+      <p>HTTP VERB: DELETE</p>
+      <p>"http://{host-address:port}/customer/{id}" to delete a customer.</p>
+      <p> e.g. (when runing locally) "http://localhost:3300/customer/5"</p>
+    </ul>
+  </p>
+</body>
+</html>
