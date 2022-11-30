@@ -118,6 +118,7 @@ func buildCustomerUpdateBeta(cust *Customer, json *map[string]string) {
 func updateCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	id := mux.Vars(r)["id"]
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
@@ -125,12 +126,12 @@ func updateCustomer(w http.ResponseWriter, r *http.Request) {
 
 	var test map[string]string
 	json.Unmarshal(reqBody, &test)
-	strIndex := test["Id"]
-	tempCon := CUSTOMER_DB[strIndex]
+
+	tempCon := CUSTOMER_DB[id]
 	buildCustomerUpdateBeta(&tempCon, &test)
 
-	if _, ok := CUSTOMER_DB[strIndex]; ok {
-		CUSTOMER_DB[strIndex] = tempCon
+	if _, ok := CUSTOMER_DB[id]; ok {
+		CUSTOMER_DB[id] = tempCon
 		getCustomers(w, r)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
@@ -145,8 +146,8 @@ func main() {
 
 	router.HandleFunc("/customers", addCustomer).Methods("POST")
 	router.HandleFunc("/customers", getCustomers).Methods("GET")
-	router.HandleFunc("/customers", updateCustomer).Methods("PATCH")
 
+	router.HandleFunc("/customers/{id}", updateCustomer).Methods("PATCH")
 	router.HandleFunc("/customers/{id}", getCustomer).Methods("GET")
 	router.HandleFunc("/customers/{id}", deleteCustomer).Methods("DELETE")
 
